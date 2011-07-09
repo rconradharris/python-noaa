@@ -1,23 +1,12 @@
-from xml.etree import ElementTree as ET
+import collections
+import datetime
 from pprint import pprint
 import urllib
+from xml.etree import ElementTree as ET
 
 import dateutil
 import dateutil.parser
 
-
-URL = "http://www.weather.gov/forecasts/xml/sample_products/"\
-      "browser_interface/ndfdXMLclient.php"
-
-params = {
-    "lat": "38.99",
-    "lon": "-77.01",
-    "product": "time-series", 
-    "begin": "2004-01-01T00:00:00", 
-    "end": "2013-04-20T00:00:00", 
-    "maxt": "maxt", 
-    "mint": "mint"
-}
 
 def print_tree(root, indent=0):
     print "%s%s%s%s" % (' ' * indent, root.tag, root.text, root.attrib)
@@ -25,12 +14,7 @@ def print_tree(root, indent=0):
         print_tree(child, indent + 1)
 
 
-query_string = urllib.urlencode(params)
-url = "?".join([URL, query_string])
-resp = urllib.urlopen(url)
-tree = ET.parse(resp)
-
-def parse_time_layout(tree):
+def parse_time_layouts(tree):
     """Return a dictionary containing the time-layouts
 
     A time-layout looks like:
@@ -38,7 +22,7 @@ def parse_time_layout(tree):
         { 'time-layout-key': [(start-time, end-time), ...] }
     """
     parse_dt = dateutil.parser.parse
-    time_layout = {}
+    time_layouts = {}
     for tl_elem in tree.getroot().getiterator(tag="time-layout"):
         start_times = []
         end_times = []
@@ -52,9 +36,9 @@ def parse_time_layout(tree):
                 dt = parse_dt(tl_child.text)
                 end_times.append(dt)
 
-        time_layout[key] = zip(start_times, end_times)
+        time_layouts[key] = zip(start_times, end_times)
 
-    return time_layout
+    return time_layouts
 
 def parse_temperatures(tree):
     """Return a dictionary containing temperature information
@@ -73,7 +57,11 @@ def parse_temperatures(tree):
 
         values = []
         for val_e in tmp_e.getiterator(tag='value'):
-            val = int(val_e.text)
+            try:
+                val = int(val_e.text)
+            except TypeError:
+                # Temp can be none if we don't have a forecast for that date
+                val = None
             values.append(val)
 
         temperature['values'] = values
@@ -81,5 +69,71 @@ def parse_temperatures(tree):
 
     return temperatures
 
-pprint(parse_time_layout(tree))
-pprint(parse_temperatures(tree))
+
+def daily_forecast_by_zip(zip_code, start_date=None, num_days=7):
+    """Return a daily forecast by zip code
+
+    :param zip_code: 
+    :param start_date: 
+    :param num_days: 
+    :param units: 
+    :returns: [(date, min_temp, max_temp), ...]
+    """
+    if not start_date:
+        start_date = datetime.date.today()
+
+    URL = "http://www.weather.gov/forecasts/xml/sample_products"\
+          "/browser_interface/ndfdBrowserClientByDay.php"
+
+    # NOTE: the order of the query-string parameters seems to matter; so,
+    #   we can't use a dictionary to hold the params
+    params = [("zipCodeList", zip_code),
+              ("format", "24 hourly"),
+              ("startDate", start_date.strftime("%Y-%m-%d")),
+              ("numDays", str(num_days))]
+
+    query_string = urllib.urlencode(params)
+    url = "?".join([URL, query_string])
+    resp = urllib.urlopen(url)
+    tree = ET.parse(resp)
+
+    time_layouts = parse_time_layouts(tree)
+    temperatures = parse_temperatures(tree)
+
+    def _get_dates_values(type_, temperatures, time_layouts):
+        temp_info = temperatures[type_]
+        time_layout_key = temp_info['time_layout']
+        time_layout = time_layouts[time_layout_key]
+        values = temp_info['values']
+        start_dates = [st.date() for st, _ in time_layout]
+        return zip(start_dates, values)
+
+    def _group_by_date(min_data, max_data):
+        grouped = collections.defaultdict(dict)
+        for start_date, min_temp in min_data:
+            date_key = start_date.strftime("%Y-%m-%d")
+            grouped[date_key]['min_temp'] = min_temp
+
+        for start_date, max_temp in max_data:
+            date_key = start_date.strftime("%Y-%m-%d")
+            grouped[date_key]['max_temp'] = max_temp
+
+        return grouped
+
+    min_data = _get_dates_values('minimum', temperatures, time_layouts)
+    max_data = _get_dates_values('maximum', temperatures, time_layouts)
+    merged = _group_by_date(min_data, max_data)
+
+    forecast = []
+    for date_key, items in sorted(merged.iteritems()):
+        min_temp = items['min_temp']
+        max_temp = items['max_temp']
+        if min_temp is not None and max_temp is not None:
+            date = datetime.datetime.strptime(date_key, "%Y-%m-%d")
+            day = (date, min_temp, max_temp)
+            forecast.append(day)
+
+    return forecast
+
+forecast = daily_forecast_by_zip(78703)
+pprint(forecast)
