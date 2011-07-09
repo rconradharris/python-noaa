@@ -77,7 +77,7 @@ def daily_forecast_by_zip(zip_code, start_date=None, num_days=7):
     :param start_date: 
     :param num_days: 
     :param units: 
-    :returns: [(date, min_temp, max_temp), ...]
+    :returns: [{'date': date, 'max_temp': max_temp, 'min_temp': min_temp}]
     """
     if not start_date:
         start_date = datetime.date.today()
@@ -130,10 +130,12 @@ def daily_forecast_by_zip(zip_code, start_date=None, num_days=7):
         max_temp = items['max_temp']
         if min_temp is not None and max_temp is not None:
             date = datetime.datetime.strptime(date_key, "%Y-%m-%d")
-            day = (date, min_temp, max_temp)
-            forecast.append(day)
+            items['date'] = date
+            forecast.append(items)
 
     return forecast
 
+import json
 forecast = daily_forecast_by_zip(78703)
-pprint(forecast)
+dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime.datetime) else None
+print json.dumps(forecast, default=dthandler)
