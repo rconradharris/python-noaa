@@ -81,6 +81,8 @@ def conditions_color(conditions):
         return 'red'
     elif 'Cold' in conditions:
         return 'blue'
+    elif 'Snow' in conditions:
+        return 'white'
     else:
         return "default"
 
