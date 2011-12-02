@@ -16,7 +16,7 @@ class Temperature(object):
         return (5.0 / 9) * (self.value - 32)
 
 
-class WeatherDataPoint(object):
+class DailyWeatherDataPoint(object):
     def __init__(self, date, min_temp, max_temp, conditions):
         self.date = date
         self.min_temp = min_temp

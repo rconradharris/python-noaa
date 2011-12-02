@@ -16,7 +16,7 @@ def daily_forecast_by_zip_code(zip_code, start_date=None, num_days=6,
     :param zip_code:
     :param start_date:
     :param num_days:
-    :returns: [WeatherDataPoint() ...]
+    :returns: [DailyWeatherDataPoint() ...]
     """
     location_info = [("zipCodeList", zip_code)]
     return _daily_forecast_from_location_info(
@@ -32,7 +32,7 @@ def daily_forecast_by_lat_lon(lat, lon, start_date=None, num_days=6,
     :param lon:
     :param start_date:
     :param num_days:
-    :returns: [WeatherDataPoint() ...]
+    :returns: [DailyWeatherDataPoint() ...]
     """
     location_info = [("lat", lat), ("lon", lon)]
     return _daily_forecast_from_location_info(
@@ -47,7 +47,7 @@ def daily_forecast_by_location(location, start_date=None, num_days=6,
     :param location: A location string that will be geocoded (ex. "Austin")
     :param start_date:
     :param num_days:
-    :returns: [WeatherDataPoint() ...]
+    :returns: [DailyWeatherDataPoint() ...]
     """
     lat, lon, address = geocode.geocode_location(location)
     return address, daily_forecast_by_lat_lon(
@@ -157,7 +157,7 @@ def _daily_forecast_from_location_info(location_info, start_date=None,
         temp_unit = 'C' if metric else 'F'
         min_temp = models.Temperature(min_temp_value, unit=temp_unit)
         max_temp = models.Temperature(max_temp_value, unit=temp_unit)
-        datapoint = models.WeatherDataPoint(
+        datapoint = models.DailyWeatherDataPoint(
                 date, min_temp, max_temp, condition)
         forecast.append(datapoint)
 
