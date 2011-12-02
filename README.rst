@@ -15,6 +15,7 @@ Requires
 
 * Python 2.6+
 * argparse (if Python < 2.7)
+* dateutils
 
 
 Command-Line Usage
