@@ -18,7 +18,7 @@ By Zip Code
 
 ::
 
-    $ python noaa.py 78703
+    $ noaa 78703
     Forecast for 78703
     Fri Chance Rain Showers               57 F    70 F +++++++++++++++++++++++++++++++++++
     Sat Rain Showers Likely               60 F    72 F ++++++++++++++++++++++++++++++++++++
@@ -31,7 +31,7 @@ By Location
 
 ::
 
-    $ python noaa.py Austin, TX
+    $ noaa Austin, TX
     Forecast for Austin, TX, USA
     Fri Chance Rain Showers               57 F    70 F +++++++++++++++++++++++++++++++++++
     Sat Rain Showers Likely               60 F    72 F ++++++++++++++++++++++++++++++++++++
@@ -44,7 +44,7 @@ By Coordinates
 
 ::
 
-    $ python noaa.py --metric 30.29128 -97.7385
+    $ noaa --metric 30.29128 -97.7385
     Forecast for 30.29128, -97.7385
     Fri Chance Rain Showers               14 C    21 C +++++++++++++++++++++
     Sat Rain Showers Likely               16 C    22 C ++++++++++++++++++++++
