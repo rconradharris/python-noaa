@@ -4,7 +4,7 @@ from setuptools.command.sdist import sdist
 import noaa
 
 setup(
-    name='python-noaa',
+    name='noaa',
     version=noaa.__version__,
     description='Python Bindings to the NOAA National Digital Forecast '
                 'Database (NDFD)',
@@ -19,4 +19,4 @@ setup(
         'Programming Language :: Python :: 2.6'
     ],
     install_requires=[],
-    scripts=[])
+    scripts=["bin/noaa"])

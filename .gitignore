@@ -1,1 +1,7 @@
 *.swp
+*.pyc
+*.DS_Store
+build
+dist
+noaa.egg-info
+*.log
