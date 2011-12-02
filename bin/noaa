@@ -25,6 +25,8 @@ Database (NDFD).
 """
 
 import argparse
+import ConfigParser
+import os
 import sys
 
 import noaa
@@ -48,18 +50,24 @@ def temp_color(temp_f):
         return "magenta"  # below zero
 
 
-def simple_temp_graph(temp, scale=0.5):
+def simple_temp_graph(temp, scale=0.5, color=True):
     value = temp.farenheit
     char = '+' if value >= 0 else '-'
     scaled_value = int(abs(value * scale))
-    color = temp_color(temp.farenheit)
-    return utils.colorize(char * scaled_value, color)
+    graph_str = char * scaled_value
 
+    if color:
+        graph_str = utils.colorize(graph_str, temp_color(temp.farenheit))
 
-def format_temp(temp, padding=5):
-    color = temp_color(temp.farenheit)
+    return graph_str
+
+def format_temp(temp, padding=5, color=True):
     temp_str = str(temp.value).rjust(padding)
-    return " ".join([utils.colorize(temp_str, color), temp.unit])
+
+    if color:
+        temp_str = utils.colorize(temp_str, temp_color(temp.farenheit))
+
+    return " ".join([temp_str, temp.unit])
 
 
 def conditions_color(conditions):
@@ -77,19 +85,62 @@ def conditions_color(conditions):
         return "default"
 
 
-def format_conditions(conditions, padding=30):
-    color = conditions_color(conditions)
+def format_conditions(conditions, padding=30, color=True):
     conditions_str = conditions.ljust(padding)
-    return utils.colorize(conditions_str, color)
 
+    if color:
+        conditions_str = utils.colorize(
+                conditions_str, conditions_color(conditions))
+
+    return conditions_str
+
+
+def config_get_boolean(config, section, option, default=None):
+    try:
+        value = config.getboolean(section, option)
+    except ConfigParser.NoSectionError:
+        value = default
+    except ConfigParser.NoOptionError:
+        value = default
+
+    return value
 
 def make_parser():
+    config = ConfigParser.ConfigParser()
+    config.read(os.path.expanduser("~/.noaarc"))
+
+    try:
+        default_location = config.get('default', 'location').split()
+    except ConfigParser.NoSectionError:
+        default_location = None
+    except ConfigParser.NoOptionError:
+        default_location = None
+
+    default_metric = config_get_boolean(
+            config, 'default', 'metric', default=False)
+
+    default_heading = config_get_boolean(
+            config, 'default', 'heading', default=True)
+
+    default_color = config_get_boolean(
+            config, 'default', 'color', default=False)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('location', nargs="+")
-    parser.add_argument('-m', '--metric', action="store_true",
+    parser.add_argument('location',
+                        nargs="*",
+                        default=default_location)
+    parser.add_argument('-m', '--metric',
+                        action="store_true",
+                        default=default_metric,
                         help="use Celsius for temperatures")
-    parser.add_argument('-n', '--no-heading', action="store_true",
-                        help="Don't display heading with location.")
+    parser.add_argument('--no-heading',
+                        action="store_true",
+                        default=not default_heading,
+                        help="don't display heading with location.")
+    parser.add_argument('-c', '--color',
+                        action="store_true",
+                        default=default_color,
+                        help="colorize results.")
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + noaa.__version__)
     return parser
@@ -110,7 +161,6 @@ def daily_forecast_by_location(args):
 
 def daily_forecast_by_zip_code(args):
     zip_code = "".join(args.location)
-    pretty_location = zip_code
 
     try:
         fcast = forecast.daily_forecast_by_zip_code(
@@ -119,19 +169,21 @@ def daily_forecast_by_zip_code(args):
         print >> sys.stderr, "Error: %s" % e
         sys.exit(1)
 
+    pretty_location = zip_code
     return pretty_location, fcast
 
 
 def daily_forecast_by_lat_lon(args):
     lat, lon = args.location
-    pretty_location = ', '.join([lat, lon])
 
     try:
-        fcast = forecast.daily_forecast_by_lat_lon(lat, lon, metric=args.metric)
+        fcast = forecast.daily_forecast_by_lat_lon(
+                lat, lon, metric=args.metric)
     except exceptions.NOAAException as e:
         print >> sys.stderr, "Error: %s" % e
         sys.exit(1)
 
+    pretty_location = ', '.join([lat, lon])
     return pretty_location, fcast
 
 
@@ -157,10 +209,10 @@ def main():
 
     for datapoint in fcast:
         print datapoint.date.strftime('%a'),
-        print format_conditions(datapoint.conditions),
-        print format_temp(datapoint.min_temp),
-        print format_temp(datapoint.max_temp),
-        print simple_temp_graph(datapoint.max_temp)
+        print format_conditions(datapoint.conditions, color=args.color),
+        print format_temp(datapoint.min_temp, color=args.color),
+        print format_temp(datapoint.max_temp, color=args.color),
+        print simple_temp_graph(datapoint.max_temp, color=args.color)
 
 
 if __name__ == "__main__":

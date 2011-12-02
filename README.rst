@@ -51,3 +51,15 @@ By Coordinates
     Sun Rain Showers Likely               12 C    12 C ++++++++++++
     Mon Chance Rain                        4 C     7 C +++++++
     Tue Cold                               1 C     8 C ++++++++
+
+
+Example ~/.noaarc
+=================
+
+::
+
+    [default]
+    location=78705
+    metric=False
+    heading=False
+    color=True
