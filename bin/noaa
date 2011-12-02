@@ -116,7 +116,8 @@ def main():
         pretty_location = zip_code
 
         try:
-            fcast = forecast.daily_forecast_by_zip_code(zip_code, metric=metric)
+            fcast = forecast.daily_forecast_by_zip_code(
+                    zip_code, metric=metric)
         except exceptions.NOAAException as e:
             print >> sys.stderr, "Error: %s" % e
             sys.exit(1)
