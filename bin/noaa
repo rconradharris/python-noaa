@@ -27,64 +27,60 @@ Database (NDFD).
 import argparse
 import sys
 
+import noaa
 from noaa import exceptions
 from noaa import forecast
 from noaa import utils
 
 
-def simple_temp_graph(temp):
-    scale = 0.5 if temp.unit == "F" else 1.0
-    value = temp.value
-    if value is None:
-        return ''
+def temp_color(temp_f):
+    if temp_f >= 90:
+        return "red"      # hot
+    elif temp_f >= 68:
+        return "yellow"   # warm
+    elif temp_f >= 55:
+        return "default"  # nice
+    elif temp_f >= 32:
+        return "blue"     # cold
+    elif temp_f > 0:
+        return "cyan"     # freezing
+    else:
+        return "magenta"  # below zero
+
+
+def simple_temp_graph(temp, scale=0.5):
+    value = temp.farenheit
     char = '+' if value >= 0 else '-'
-    scaled_temp = int(abs(value * scale))
-    return utils.colorize(char * scaled_temp, "white")
+    scaled_value = int(abs(value * scale))
+    color = temp_color(temp.farenheit)
+    return utils.colorize(char * scaled_value, color)
 
 
 def format_temp(temp, padding=5):
-    value = temp.value
-    if value is None:
-        return 'N/A'.rjust(padding)
-
-    def temp_color(value_f):
-        if value_f >= 90:
-            return "red"      # hot
-        elif value_f >= 68:
-            return "yellow"   # warm
-        elif value_f >= 55:
-            return "default"  # nice
-        elif value_f >= 32:
-            return "blue"     # cold
-        elif value_f > 0:
-            return "cyan"     # freezing
-        else:
-            return "magenta"  # below zero
-
     color = temp_color(temp.farenheit)
-    return (utils.colorize(str(value).rjust(padding), color) + ' ' + temp.unit)
+    temp_str = str(temp.value).rjust(padding)
+    return " ".join([utils.colorize(temp_str, color), temp.unit])
+
+
+def conditions_color(conditions):
+    if 'Sunny' in conditions:
+        return 'yellow'
+    elif 'Rain' in conditions:
+        return 'cyan'
+    elif 'Drizzle' in conditions:
+        return 'green'
+    elif 'Thunderstorms' in conditions:
+        return 'red'
+    elif 'Cold' in conditions:
+        return 'blue'
+    else:
+        return "default"
 
 
 def format_conditions(conditions, padding=30):
-    if conditions is None:
-        return 'N/A'.ljust(padding)
-
-    def conditions_color(conditions):
-        if 'Sunny' in conditions:
-            return 'yellow'
-        elif 'Rain' in conditions:
-            return 'cyan'
-        elif 'Drizzle' in conditions:
-            return 'green'
-        elif 'Thunderstorms' in conditions:
-            return 'red'
-        elif 'Cold' in conditions:
-            return 'blue'
-        else:
-            return "default"
-
     color = conditions_color(conditions)
-    return utils.colorize(conditions.ljust(padding), color)
+    conditions_str = conditions.ljust(padding)
+    return utils.colorize(conditions_str, color)
 
 
 def make_parser():
@@ -92,50 +88,73 @@ def make_parser():
     parser.add_argument('location', nargs="+")
     parser.add_argument('-m', '--metric', action="store_true",
                         help="use Celsius for temperatures")
+    parser.add_argument('-n', '--no-heading', action="store_true",
+                        help="Don't display heading with location.")
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + noaa.__version__)
     return parser
+
+
+def daily_forecast_by_location(args):
+    location = " ".join(args.location)
+
+    try:
+        pretty_location, fcast = forecast.daily_forecast_by_location(
+                location, metric=args.metric)
+    except exceptions.NOAAException as e:
+        print >> sys.stderr, "Error: %s" % e
+        sys.exit(1)
+
+    return pretty_location, fcast
+
+
+def daily_forecast_by_zip_code(args):
+    zip_code = "".join(args.location)
+    pretty_location = zip_code
+
+    try:
+        fcast = forecast.daily_forecast_by_zip_code(
+                zip_code, metric=args.metric)
+    except exceptions.NOAAException as e:
+        print >> sys.stderr, "Error: %s" % e
+        sys.exit(1)
+
+    return pretty_location, fcast
+
+
+def daily_forecast_by_lat_lon(args):
+    lat, lon = args.location
+    pretty_location = ', '.join([lat, lon])
+
+    try:
+        fcast = forecast.daily_forecast_by_lat_lon(lat, lon, metric=args.metric)
+    except exceptions.NOAAException as e:
+        print >> sys.stderr, "Error: %s" % e
+        sys.exit(1)
+
+    return pretty_location, fcast
 
 
 def main():
     parser = make_parser()
     args = parser.parse_args()
-    metric = args.metric
 
     if not utils.all_numbers(args.location):
         # Args not being all numbers implies we were passed a string location
-        location = " ".join(args.location)
-        try:
-            address, fcast = forecast.daily_forecast_by_location(
-                    location, metric=metric)
-        except exceptions.NOAAException as e:
-            print >> sys.stderr, "Error: %s" % e
-            sys.exit(1)
-        pretty_location = address
+        pretty_location, fcast = daily_forecast_by_location(args)
     elif len(args.location) == 1:
         # All numbers with one argument implies zip code
-        zip_code = "".join(args.location)
-        pretty_location = zip_code
-
-        try:
-            fcast = forecast.daily_forecast_by_zip_code(
-                    zip_code, metric=metric)
-        except exceptions.NOAAException as e:
-            print >> sys.stderr, "Error: %s" % e
-            sys.exit(1)
+        pretty_location, fcast = daily_forecast_by_zip_code(args)
     elif len(args.location) == 2:
         # 3 args that are all numbers implies lat lon coordinates
-        lat, lon = args.location
-        pretty_location = ', '.join([lat, lon])
-
-        try:
-            fcast = forecast.daily_forecast_by_lat_lon(lat, lon, metric=metric)
-        except exceptions.NOAAException as e:
-            print >> sys.stderr, "Error: %s" % e
-            sys.exit(1)
+        pretty_location, fcast = daily_forecast_by_lat_lon(args)
     else:
         parser.print_help()
         sys.exit(1)
 
-    print "Forecast for %s" % pretty_location
+    if not args.no_heading:
+        print "Forecast for %s" % pretty_location
+
     for datapoint in fcast:
         print datapoint.date.strftime('%a'),
         print format_conditions(datapoint.conditions),
