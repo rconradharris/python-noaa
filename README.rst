@@ -10,6 +10,13 @@ Python bindings for NOAA's XML web-service as well as a simple command-line
 utility for fetching the forecast.
 
 
+Requires
+========
+
+* Python 2.6+
+* argparse (if Python < 2.7)
+
+
 Command-Line Usage
 ==================
 
