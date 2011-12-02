@@ -1,9 +1,12 @@
+import contextlib
 import urllib
+import sys
 
 
 def colorize(text, color):
     if color == "default":
         return text
+
     COLORS = {"black": 30,
               "red": 31,
               "green": 32,
@@ -12,6 +15,7 @@ def colorize(text, color):
               "magenta": 35,
               "cyan": 36,
               "white": 37}
+
     color_code = COLORS[color]
     return "\x1b[%(color_code)s;1m%(text)s\x1b[0m" % locals()
 
@@ -47,3 +51,22 @@ def open_url(url, params=None):
 
     resp = urllib.urlopen(url)
     return resp
+
+
+@contextlib.contextmanager
+def die_on(*exception_classes, **kwargs):
+    """Print  error message and exit the program with non-zero status if
+    a matching exception is raised.
+
+    :param msg_func: A function to generate the error message.
+    :param exit_code: Exit code
+    :returns: Nothing
+    """
+    msg_func = kwargs.pop('msg_func', lambda e: "Error: %s" % e)
+    exit_code = kwargs.pop('exit_code', 1)
+
+    try:
+        yield
+    except exception_classes as e:
+        print >> sys.stderr, msg_func(e)
+        sys.exit(exit_code)

@@ -166,12 +166,8 @@ def make_parser():
 def daily_forecast_by_location(args):
     location = " ".join(args.location)
 
-    try:
-        pretty_location, fcast = forecast.daily_forecast_by_location(
-                location, metric=args.metric)
-    except exceptions.NOAAException as e:
-        print >> sys.stderr, "Error: %s" % e
-        sys.exit(1)
+    pretty_location, fcast = forecast.daily_forecast_by_location(
+            location, metric=args.metric)
 
     return pretty_location, fcast
 
@@ -179,12 +175,8 @@ def daily_forecast_by_location(args):
 def daily_forecast_by_zip_code(args):
     zip_code = "".join(args.location)
 
-    try:
-        fcast = forecast.daily_forecast_by_zip_code(
-                zip_code, metric=args.metric)
-    except exceptions.NOAAException as e:
-        print >> sys.stderr, "Error: %s" % e
-        sys.exit(1)
+    fcast = forecast.daily_forecast_by_zip_code(
+            zip_code, metric=args.metric)
 
     pretty_location = zip_code
     return pretty_location, fcast
@@ -193,12 +185,8 @@ def daily_forecast_by_zip_code(args):
 def daily_forecast_by_lat_lon(args):
     lat, lon = args.location
 
-    try:
-        fcast = forecast.daily_forecast_by_lat_lon(
-                lat, lon, metric=args.metric)
-    except exceptions.NOAAException as e:
-        print >> sys.stderr, "Error: %s" % e
-        sys.exit(1)
+    fcast = forecast.daily_forecast_by_lat_lon(
+            lat, lon, metric=args.metric)
 
     pretty_location = ', '.join([lat, lon])
     return pretty_location, fcast
@@ -217,16 +205,19 @@ def main():
 
     if not utils.all_numbers(args.location):
         # Args not being all numbers implies we were passed a string location
-        pretty_location, fcast = daily_forecast_by_location(args)
+        forecast_func = daily_forecast_by_location
     elif len(args.location) == 1:
         # All numbers with one argument implies zip code
-        pretty_location, fcast = daily_forecast_by_zip_code(args)
+        forecast_func = daily_forecast_by_zip_code
     elif len(args.location) == 2:
         # 3 args that are all numbers implies lat lon coordinates
-        pretty_location, fcast = daily_forecast_by_lat_lon(args)
+        forecast_func = daily_forecast_by_lat_lon
     else:
         parser.print_help()
         sys.exit(1)
+
+    with utils.die_on(exceptions.NOAAException):
+        pretty_location, fcast = forecast_func(args)
 
     if args.heading:
         print "Forecast for %s" % pretty_location
