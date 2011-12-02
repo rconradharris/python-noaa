@@ -11,6 +11,7 @@ setup(
     license='MIT License',
     author='Rick Harris',
     author_email='rconradharris@gmail.com',
+    url='https://github.com/rconradharris/python-noaa',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
