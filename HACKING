@@ -1,0 +1,12 @@
+Steps Before Making a Pull Request
+-----------------------------------
+
+Squash any commits in topic branch (rebase or merge/squash).
+
+(Re)generate AUTHORS file::
+
+    ./tools/generate_authors.sh > AUTHORS
+
+Run pep8::
+
+    ./tools/run_pep8.sh
