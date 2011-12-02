@@ -129,18 +129,31 @@ def make_parser():
     parser.add_argument('location',
                         nargs="*",
                         default=default_location)
-    parser.add_argument('-m', '--metric',
+    parser.add_argument('--metric',
                         action="store_true",
                         default=default_metric,
-                        help="use Celsius for temperatures")
-    parser.add_argument('--no-heading',
+                        help="use Celsius for temperatures.")
+    parser.add_argument('--imperial',
+                        action="store_false",
+                        dest="metric",
+                        help="use Celsius for temperatures.")
+    parser.add_argument('--heading',
                         action="store_true",
-                        default=not default_heading,
-                        help="don't display heading with location.")
-    parser.add_argument('-c', '--color',
+                        dest='heading',
+                        default=default_heading,
+                        help="display location heading.")
+    parser.add_argument('--no-heading',
+                        action="store_false",
+                        dest='heading',
+                        help="don't display location heading.")
+    parser.add_argument('--color',
                         action="store_true",
                         default=default_color,
                         help="colorize results.")
+    parser.add_argument('--no-color',
+                        action="store_false",
+                        dest="color",
+                        help="don't colorize results.")
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + noaa.__version__)
     return parser
@@ -204,7 +217,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    if not args.no_heading:
+    if args.heading:
         print "Forecast for %s" % pretty_location
 
     for datapoint in fcast:
