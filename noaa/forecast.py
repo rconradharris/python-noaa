@@ -1,6 +1,4 @@
-import collections
 import datetime
-import json
 from xml.etree import ElementTree as ET
 
 import dateutil.parser
@@ -9,6 +7,51 @@ from noaa import exceptions
 from noaa import geocode
 from noaa import models
 from noaa import utils
+
+
+def daily_forecast_by_zip_code(zip_code, start_date=None, num_days=6,
+                              metric=False):
+    """Return a daily forecast by zip code.
+
+    :param zip_code:
+    :param start_date:
+    :param num_days:
+    :returns: [WeatherDataPoint() ...]
+    """
+    location_info = [("zipCodeList", zip_code)]
+    return _daily_forecast_from_location_info(
+            location_info, start_date=start_date, num_days=num_days,
+            metric=metric)
+
+
+def daily_forecast_by_lat_lon(lat, lon, start_date=None, num_days=6,
+                              metric=False):
+    """Return a daily forecast by lat lon.
+
+    :param lat:
+    :param lon:
+    :param start_date:
+    :param num_days:
+    :returns: [WeatherDataPoint() ...]
+    """
+    location_info = [("lat", lat), ("lon", lon)]
+    return _daily_forecast_from_location_info(
+            location_info, start_date=start_date, num_days=num_days,
+            metric=metric)
+
+
+def daily_forecast_by_location(location, start_date=None, num_days=6,
+                               metric=False):
+    """Return a daily forecast by location.
+
+    :param location: A location string that will be geocoded (ex. "Austin")
+    :param start_date:
+    :param num_days:
+    :returns: [WeatherDataPoint() ...]
+    """
+    lat, lon, address = geocode.geocode_location(location)
+    return address, daily_forecast_by_lat_lon(
+            lat, lon, start_date=start_date, num_days=num_days, metric=metric)
 
 
 def _parse_time_layouts(tree):
@@ -69,57 +112,17 @@ def _parse_conditions(tree):
         return time_layout_key, values
 
 
-def daily_forecast_by_zip_code(zip_code, start_date=None, num_days=6,
-                              metric=False):
-    """Return a daily forecast by zip code.
-
-    :param zip_code:
-    :param start_date:
-    :param num_days:
-    :returns: [WeatherDataPoint() ...]
-    """
-    location_info = [("zipCodeList", zip_code)]
-    return _daily_forecast_from_location_info(
-            location_info, start_date=start_date, num_days=num_days,
-            metric=metric)
-
-
-def daily_forecast_by_lat_lon(lat, lon, start_date=None, num_days=6,
-                              metric=False):
-    """Return a daily forecast by lat lon.
-
-    :param lat:
-    :param lon:
-    :param start_date:
-    :param num_days:
-    :returns: [WeatherDataPoint() ...]
-    """
-    location_info = [("lat", lat), ("lon", lon)]
-    return _daily_forecast_from_location_info(
-            location_info, start_date=start_date, num_days=num_days,
-            metric=metric)
-
-
-def daily_forecast_by_location(location, start_date=None, num_days=6,
-                               metric=False):
-    lat, lon, address = geocode.geocode_location(location)
-    return address, daily_forecast_by_lat_lon(
-            lat, lon, start_date=start_date, num_days=num_days, metric=metric)
-
-
 def _daily_forecast_from_location_info(location_info, start_date=None,
                                        num_days=6, metric=False):
     if not start_date:
         start_date = datetime.date.today()
-
-    unit = "m" if metric else "e"
 
     # NOTE: the order of the query-string parameters seems to matter; so,
     # we can't use a dictionary to hold the params
     params = location_info + [("format", "24 hourly"),
                               ("startDate", start_date.strftime("%Y-%m-%d")),
                               ("numDays", str(num_days)),
-                              ("Unit", unit)]
+                              ("Unit", "m" if metric else "e")]
 
     FORECAST_BY_DAY_URL = ("http://www.weather.gov/forecasts/xml"
                            "/sample_products/browser_interface"
@@ -143,10 +146,11 @@ def _daily_forecast_from_location_info(location_info, start_date=None,
     time_layout = time_layouts[time_layout_key]
     dates = [dt.date() for dt, _ in time_layout]
 
-    new_forecast = []
+    forecast = []
     for date, min_temp_value, max_temp_value, condition in zip(
             dates, min_temps, max_temps, conditions):
 
+        # If we're missing any data, don't create the data point
         if utils.any_none([min_temp_value, max_temp_value, condition]):
             continue
 
@@ -155,6 +159,6 @@ def _daily_forecast_from_location_info(location_info, start_date=None,
         max_temp = models.Temperature(max_temp_value, unit=temp_unit)
         datapoint = models.WeatherDataPoint(
                 date, min_temp, max_temp, condition)
-        new_forecast.append(datapoint)
+        forecast.append(datapoint)
 
-    return new_forecast
+    return forecast

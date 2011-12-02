@@ -1,10 +1,7 @@
-import sys
 import urllib
 
 
-def colorize(text, color, stream=sys.stdout):
-    if not stream.isatty():
-        return text
+def colorize(text, color):
     if color == "default":
         return text
     COLORS = {"black": 30,

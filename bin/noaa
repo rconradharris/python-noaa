@@ -61,6 +61,7 @@ def simple_temp_graph(temp, scale=0.5, color=True):
 
     return graph_str
 
+
 def format_temp(temp, padding=5, color=True):
     temp_str = str(temp.value).rjust(padding)
 
@@ -106,6 +107,7 @@ def config_get_boolean(config, section, option, default=None):
         value = default
 
     return value
+
 
 def make_parser():
     config = ConfigParser.ConfigParser()
@@ -202,9 +204,16 @@ def daily_forecast_by_lat_lon(args):
     return pretty_location, fcast
 
 
+def args_overrides(args):
+    """Perform any argument overrides."""
+    if not sys.stdout.isatty():
+        args.color = False
+
+
 def main():
     parser = make_parser()
     args = parser.parse_args()
+    args_overrides(args)
 
     if not utils.all_numbers(args.location):
         # Args not being all numbers implies we were passed a string location
