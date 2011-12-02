@@ -1,6 +1,9 @@
 import contextlib
 import urllib
 import sys
+from xml.etree import ElementTree as ET
+
+import dateutil.parser
 
 
 def colorize(text, color):
@@ -70,3 +73,12 @@ def die_on(*exception_classes, **kwargs):
     except exception_classes as e:
         print >> sys.stderr, msg_func(e)
         sys.exit(exit_code)
+
+
+def parse_xml(fileobj):
+    tree = ET.parse(fileobj)
+    return tree
+
+
+def parse_dt(dt):
+    return dateutil.parser.parse(dt)

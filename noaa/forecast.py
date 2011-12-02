@@ -1,7 +1,4 @@
 import datetime
-from xml.etree import ElementTree as ET
-
-import dateutil.parser
 
 from noaa import exceptions
 from noaa import geocode
@@ -49,9 +46,10 @@ def daily_forecast_by_location(location, start_date=None, num_days=6,
     :param num_days:
     :returns: [DailyWeatherDataPoint() ...]
     """
-    lat, lon, address = geocode.geocode_location(location)
-    return address, daily_forecast_by_lat_lon(
-            lat, lon, start_date=start_date, num_days=num_days, metric=metric)
+    loc = geocode.geocode_location(location)
+    return loc.description, daily_forecast_by_lat_lon(
+            loc.lat, loc.lon, start_date=start_date, num_days=num_days,
+            metric=metric)
 
 
 def _parse_time_layouts(tree):
@@ -61,7 +59,7 @@ def _parse_time_layouts(tree):
 
         { 'time-layout-key': [(start-time, end-time), ...] }
     """
-    parse_dt = dateutil.parser.parse
+    parse_dt = utils.parse_dt
     time_layouts = {}
     for tl_elem in tree.getroot().getiterator(tag="time-layout"):
         start_times = []
@@ -129,7 +127,7 @@ def _daily_forecast_from_location_info(location_info, start_date=None,
                            "/ndfdBrowserClientByDay.php")
 
     resp = utils.open_url(FORECAST_BY_DAY_URL, params)
-    tree = ET.parse(resp)
+    tree = utils.parse_xml(resp)
 
     if tree.getroot().tag == 'error':
         raise exceptions.NOAAException("Unable to retrieve forecast")

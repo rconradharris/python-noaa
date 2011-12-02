@@ -1,6 +1,7 @@
 import json
 
 from noaa import exceptions
+from noaa import models
 from noaa import utils
 
 
@@ -26,4 +27,6 @@ def geocode_location(location, api_key=None):
     best_match = data['Placemark'][0]
     address = best_match['address']
     lon, lat, _ = best_match['Point']['coordinates']
-    return lat, lon, address
+
+    location = models.Location(lat, lon, address)
+    return location
