@@ -1,6 +1,7 @@
 import contextlib
-import urllib
+import math
 import sys
+import urllib
 from xml.etree import ElementTree as ET
 
 import dateutil.parser
@@ -82,3 +83,43 @@ def parse_xml(fileobj):
 
 def parse_dt(dt):
     return dateutil.parser.parse(dt)
+
+
+def great_circle_distance(lat1, lon1, lat2, lon2, radius, angle_units="deg"):
+    """see http://en.wikipedia.org/wiki/Haversine_formula"""
+    asin = math.asin
+    cos = math.cos
+    radians = math.radians
+    sqrt = math.sqrt
+
+    def hsin(theta):
+        return math.sin(float(theta) / 2) ** 2
+
+    if angle_units == "deg":
+        lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    elif angle_units == "rad":
+        pass
+    else:
+        raise Exception("Unknown angle_units '%s'" % angle_units)
+
+    dist = 2 * radius * asin(
+            sqrt(hsin(lat2 - lat1) + (
+                cos(lat1) * cos(lat2) * hsin(lon2 - lon1))))
+    return dist
+
+
+def earth_distance(lat1, lon1, lat2, lon2, angle_units="deg",
+                   dist_units="miles"):
+
+    EARTH_RADIUS = {
+        "miles": 3963.1676,
+        "km": 6378.1
+    }
+
+    try:
+        radius = EARTH_RADIUS[dist_units]
+    except KeyError:
+        raise Exception("Unknown dist_units '%s'" % dist_units)
+
+    return great_circle_distance(lat1, lon1, lat2, lon2, radius,
+                                 angle_units=angle_units)

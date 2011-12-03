@@ -61,7 +61,7 @@ class Wind(object):
         self.intensity = intensity
 
 
-class DailyWeatherDataPoint(object):
+class ForecastedCondition(object):
     def __init__(self, date, min_temp, max_temp, conditions):
         self.date = date
         self.min_temp = min_temp
@@ -75,7 +75,7 @@ class Station(object):
         self.location = location
 
 
-class StationObseration(object):
+class StationObservation(object):
     def __init__(self, station, updated_at, temp, relative_humidity, pressure,
                  dewpoint, weather, wind):
         self.station = station
