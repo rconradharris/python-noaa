@@ -1,6 +1,3 @@
-import os
-import shutil
-
 import noaa.exceptions
 import noaa.geocode
 import noaa.models
@@ -8,52 +5,21 @@ import noaa.stations
 import noaa.utils
 
 
-def observation_by_location(location, station_cache=None):
+def nearby_observations_for_location(location, stations):
     loc = noaa.geocode.geocode_location(location)
-    observation = observation_by_lat_lon(
-            loc.lat, loc.lon, station_cache=station_cache)
-    return observation
+    observations = nearby_observations_for_lat_lon(loc.lat, loc.lon, stations)
+    return observations
 
 
-def observation_by_lat_lon(lat, lon, station_cache=None, radius=10.0,
-                           units="miles"):
-    """
-    If station_cache is None, we'll fetch the station information via the
-    WebService each time.
+def nearby_observations_for_lat_lon(lat, lon, stations, radius=10.0,
+                                   units="miles"):
+    observations = []
+    for dist, station in noaa.stations.nearest_stations_with_distance(
+            lat, lon, stations, radius=radius, units=units):
+        observation = observation_by_station_id(station.station_id)
+        observations.append(observation)
 
-    Since this is expensive, you pass in an abspath to a file where we can
-    write this data once and read from that instead.
-    """
-    if not station_cache:
-        all_stations = noaa.stations.get_stations_from_web()
-    elif not os.path.exists(station_cache):
-        # Write the cache file
-        resp = noaa.stations.fetch_station_data()
-        with open(station_cache, "w") as f:
-            shutil.copyfileobj(resp, f)
-
-        all_stations = noaa.stations.get_stations_from_file(station_cache)
-    else:
-        all_stations = noaa.stations.get_stations_from_file(station_cache)
-
-    #station = noaa.stations.nearest_station(lat, lon, all_stations)
-    #observation = observation_by_station_id(station.station_id)
-    #return observation
-
-    matches = noaa.stations.nearest_stations_with_distance(
-            lat, lon, all_stations, radius=radius, units=units)
-
-    for dist, station in matches:
-        try:
-            return observation_by_station_id(station.station_id)
-        except noaa.exceptions.StationObservationMissingInfo, e:
-            print e
-            continue
-
-    raise noaa.exceptions.ValidStationObservationNotFound(
-            "Could not find a valid station observation within %(radius)s"
-            " %(units)s of (%(lat)s, %(lon)s)." % locals())
-
+    return observations
 
 
 def observation_by_station_id(station_id):
@@ -88,15 +54,6 @@ def _parse_station(tree):
     return station
 
 
-def _find_elem(tree, tag, required=False):
-    elem = tree.getroot().find(tag)
-    if elem is not None or not required:
-        return elem
-    else:
-        raise noaa.exceptions.StationObservationMissingInfo(
-            "StationObservation is missing '%s'" % tag)
-
-
 def _parse_observation(tree, station):
     root = tree.getroot()
     noaa.utils.print_tree(tree)
@@ -105,8 +62,7 @@ def _parse_observation(tree, station):
 
     temp_e = root.find("temp_f")
     if temp_e is None:
-        raise noaa.exceptions.StationObservationMissingInfo(
-            "StationObservation is missing 'temp_f'")
+        temp = None
     else:
         temp = noaa.models.Temperature(float(temp_e.text), unit='F')
 
