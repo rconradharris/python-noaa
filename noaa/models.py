@@ -76,13 +76,7 @@ class Station(object):
 
 
 class StationObservation(object):
-    def __init__(self, station, updated_at, temp, relative_humidity, pressure,
-                 dewpoint, weather, wind):
+    def __init__(self, station, updated_at, temp):
         self.station = station
         self.updated_at = updated_at
         self.temp = temp
-        self.relative_humidity = relative_humidity
-        self.pressure = pressure
-        self.dewpoint = dewpoint
-        self.weather = weather
-        self.wind = wind

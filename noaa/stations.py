@@ -2,19 +2,43 @@ from noaa import models
 from noaa import utils
 
 
-def nearest_station(lat, lon, stations):
-    closest_dist = None
-    closest_station = None
+def nearest_stations_with_distance(lat, lon, stations, radius=10.0,
+                                   units="miles"):
+    """Find all stations within radius of target.
+
+    :param lat:
+    :param lon:
+    :param stations: list of stations objects to scan
+    :param radius:
+    :param units:
+    :returns: [(dist, station)]
+    """
+    matches = []
     for station in stations:
         s_lat = station.location.lat
         s_lon = station.location.lon
-        dist = utils.earth_distance(s_lat, s_lon, lat, lon)
+        dist = utils.earth_distance(s_lat, s_lon, lat, lon, dist_units=units)
+        if dist <= radius:
+            matches.append((dist, station))
 
-        if closest_dist is None or dist < closest_dist:
-            closest_station = station
-            closest_dist = dist
+    matches.sort()
+    return matches
 
-    return closest_station
+
+def nearest_station(lat, lon, stations):
+    """Find single nearest station.
+
+    :param lat:
+    :param lon:
+    :param stations: list of stations objects to scan
+    """
+    matches = nearest_stations_with_distance(lat, lon, stations)
+    if matches:
+        dist, station = matches[0]
+    else:
+        station = None
+
+    return station
 
 
 def get_stations_from_web():

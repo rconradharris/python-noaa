@@ -4,3 +4,11 @@ class NOAAException(Exception):
 
 class GeocodeException(NOAAException):
     pass
+
+
+class StationObservationMissingInfo(NOAAException):
+    pass
+
+
+class ValidStationObservationNotFound(NOAAException):
+    pass
