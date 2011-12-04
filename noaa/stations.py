@@ -44,6 +44,7 @@ def nearest_station(lat, lon, stations):
 
     return station
 
+
 def get_stations_from_cache(filename):
     if not os.path.exists(filename):
         resp = noaa.stations.fetch_station_data()

@@ -75,8 +75,21 @@ class Station(object):
         self.location = location
 
 
-class StationObservation(object):
-    def __init__(self, station, updated_at, temp):
-        self.station = station
+class Observation(object):
+    """
+    NOAA's stations may return different observation parameters. Station
+    identification and pickup information appears to be consistent, but
+    nothing weather related can be assumed to be present.
+
+    If you want the temperture for a location, you must search all stations
+    nearby for a station that provides the `temp_f` parameter.
+    """
+    def __init__(self, updated_at, temp):
         self.updated_at = updated_at
         self.temp = temp
+
+
+class StationObservation(object):
+    def __init__(self, station, observation):
+        self.station = station
+        self.observation = observation
