@@ -9,14 +9,9 @@ def geocode_location(location, api_key=None):
     """Use Google to geocode a location string.
 
     For high-volume traffic, you will need to specify an API-key.
-
-    TODO: This does not work anymore. Switch to:
-    https://developers.google.com/maps/documentation/geocoding/intro
     """
-    GEOCODE_URL = "http://maps.google.com/maps/geo"
-    params = [('q', location),
-              ('sensor', 'false'),
-              ('output', 'json')]
+    GEOCODE_URL = "http://maps.googleapis.com/maps/api/geocode/json"
+    params = [('address', location)]
 
     if api_key:
         params += [('key', api_key)]
@@ -24,12 +19,12 @@ def geocode_location(location, api_key=None):
     resp = utils.open_url(GEOCODE_URL, params)
     data = json.loads(resp.read().decode())
 
-    if data['Status']['code'] != 200:
+    if data['status'] != 'OK':
         raise exceptions.GeocodeException('Unable to geocode this location')
 
-    best_match = data['Placemark'][0]
-    address = best_match['address']
-    lon, lat, _ = best_match['Point']['coordinates']
+    address = data['results'][0]['formatted_address']
+    lon = data['results'][0]['geometry']['location']['lng']
+    lat = data['results'][0]['geometry']['location']['lat']
 
     location = models.Location(lat, lon, address)
     return location
