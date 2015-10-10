@@ -28,11 +28,11 @@ def compiled_observation_for_lat_lon(lat, lon, stations, radius=10.0,
         if not compiled_observation:
             compiled_observation = copy.copy(station_observation.observation)
 
-        if not noaa.utils.any_none(compiled_observation.__dict__.values()):
+        if not noaa.utils.any_none(list(compiled_observation.__dict__.values())):
             # If all the values are filled in, break out of loop
             break
 
-        for attr, compiled_value in compiled_observation.__dict__.items():
+        for attr, compiled_value in list(compiled_observation.__dict__.items()):
             if compiled_value is None:
                 station_value = getattr(station_observation.observation, attr)
                 setattr(compiled_observation, attr, station_value)

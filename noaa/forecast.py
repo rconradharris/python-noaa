@@ -74,7 +74,7 @@ def _parse_time_layouts(tree):
                 dt = parse_dt(tl_child.text)
                 end_times.append(dt)
 
-        time_layouts[key] = zip(start_times, end_times)
+        time_layouts[key] = list(zip(start_times, end_times))
 
     return time_layouts
 
