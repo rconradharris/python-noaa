@@ -25,7 +25,7 @@ Database (NDFD).
 """
 
 import argparse
-import ConfigParser
+import configparser
 import os
 import sys
 
@@ -101,23 +101,23 @@ def format_conditions(conditions, padding=30, color=True):
 def config_get_boolean(config, section, option, default=None):
     try:
         value = config.getboolean(section, option)
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         value = default
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         value = default
 
     return value
 
 
 def make_parser():
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(os.path.expanduser("~/.noaarc"))
 
     try:
         default_location = config.get('default', 'location').split()
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         default_location = None
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         default_location = None
 
     default_metric = config_get_boolean(
@@ -220,14 +220,14 @@ def main():
         pretty_location, fcast = forecast_func(args)
 
     if args.heading:
-        print "Forecast for %s" % pretty_location
+        print("Forecast for %s" % pretty_location)
 
     for datapoint in fcast:
-        print datapoint.date.strftime('%a'),
-        print format_conditions(datapoint.conditions, color=args.color),
-        print format_temp(datapoint.min_temp, color=args.color),
-        print format_temp(datapoint.max_temp, color=args.color),
-        print simple_temp_graph(datapoint.max_temp, color=args.color)
+        print(datapoint.date.strftime('%a'), end=' ')
+        print(format_conditions(datapoint.conditions, color=args.color), end=' ')
+        print(format_temp(datapoint.min_temp, color=args.color), end=' ')
+        print(format_temp(datapoint.max_temp, color=args.color), end=' ')
+        print(simple_temp_graph(datapoint.max_temp, color=args.color))
 
 
 if __name__ == "__main__":

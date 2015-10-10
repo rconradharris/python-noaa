@@ -1,7 +1,7 @@
 import contextlib
 import math
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from xml.etree import ElementTree as ET
 
 import dateutil.parser
@@ -25,12 +25,12 @@ def colorize(text, color):
 
 
 def any_none(L):
-    return any(map(lambda x: x is None, L))
+    return any([x is None for x in L])
 
 
 def all_numbers(L):
     try:
-        map(float, L)
+        list(map(float, L))
         return True
     except ValueError:
         return False
@@ -39,10 +39,10 @@ def all_numbers(L):
 def print_tree(tree, indent=4):
     """Print an ElementTree for debugging purposes."""
     def print_elem(elem, level):
-        print " " * (indent * level),
-        print 'tag="%s"' % elem.tag,
-        print 'text="%s"' % elem.text.strip() if elem.text is not None else "",
-        print 'attrib=%s' % elem.attrib
+        print(" " * (indent * level), end=' ')
+        print('tag="%s"' % elem.tag, end=' ')
+        print('text="%s"' % elem.text.strip() if elem.text is not None else "", end=' ')
+        print('attrib=%s' % elem.attrib)
         for child in elem.getchildren():
             print_elem(child, level + 1)
     print_elem(tree.getroot(), 0)
@@ -50,10 +50,10 @@ def print_tree(tree, indent=4):
 
 def open_url(url, params=None):
     if params:
-        query_string = urllib.urlencode(params)
+        query_string = urllib.parse.urlencode(params)
         url = "?".join([url, query_string])
 
-    resp = urllib.urlopen(url)
+    resp = urllib.request.urlopen(url)
     return resp
 
 
@@ -72,7 +72,7 @@ def die_on(*exception_classes, **kwargs):
     try:
         yield
     except exception_classes as e:
-        print >> sys.stderr, msg_func(e)
+        print(msg_func(e), file=sys.stderr)
         sys.exit(exit_code)
 
 
@@ -96,7 +96,7 @@ def great_circle_distance(lat1, lon1, lat2, lon2, radius, angle_units="deg"):
         return math.sin(float(theta) / 2) ** 2
 
     if angle_units == "deg":
-        lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+        lat1, lon1, lat2, lon2 = list(map(radians, [lat1, lon1, lat2, lon2]))
     elif angle_units == "rad":
         pass
     else:
