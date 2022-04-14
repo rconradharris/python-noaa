@@ -13,9 +13,10 @@ utility for fetching the forecast.
 Requires
 ========
 
-* Python 2.6+
-* argparse (if Python < 2.7)
+* Python 3.5+
+* argparse
 * dateutils
+* configparser
 
 
 Command-Line Usage
