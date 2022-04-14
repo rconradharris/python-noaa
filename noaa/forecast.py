@@ -6,18 +6,19 @@ from noaa import models
 from noaa import utils
 
 
-def daily_forecast_by_zip_code(zip_code, start_date=None, num_days=6,
-                              metric=False):
+def daily_forecast_by_zip_code(zip_code, start_date=None, num_days=6, metric=False):
     """Return a daily forecast by zip code.
 
     :param zip_code:
     :param start_date:
     :param num_days:
+    :param metric:
     :returns: [ForecastedCondition() ...]
     """
     location_info = [("zipCodeList", zip_code)]
+    client = "NDFDgenByDayMultiZipCode"     # pulled from the details of the API
     return _daily_forecast_from_location_info(
-            location_info, start_date=start_date, num_days=num_days,
+            location_info, client, start_date=start_date, num_days=num_days,
             metric=metric)
 
 
@@ -29,21 +30,23 @@ def daily_forecast_by_lat_lon(lat, lon, start_date=None, num_days=6,
     :param lon:
     :param start_date:
     :param num_days:
+    :param metric:
     :returns: [ForecastedCondition() ...]
     """
     location_info = [("lat", lat), ("lon", lon)]
+    client = "NDFDgenByDay"    # pulled from the details of the API
     return _daily_forecast_from_location_info(
-            location_info, start_date=start_date, num_days=num_days,
+            location_info, client, start_date=start_date, num_days=num_days,
             metric=metric)
 
 
-def daily_forecast_by_location(location, start_date=None, num_days=6,
-                               metric=False):
+def daily_forecast_by_location(location, start_date=None, num_days=6, metric=False):
     """Return a daily forecast by location.
 
     :param location: A location string that will be geocoded (ex. "Austin")
     :param start_date:
     :param num_days:
+    :param metric:
     :returns: [ForecastedCondition() ...]
     """
     loc = geocode.geocode_location(location)
@@ -110,21 +113,19 @@ def _parse_conditions(tree):
         return time_layout_key, values
 
 
-def _daily_forecast_from_location_info(location_info, start_date=None,
-                                       num_days=6, metric=False):
+def _daily_forecast_from_location_info(location_info, client,  start_date=None, num_days=6, metric=False):
     if not start_date:
         start_date = datetime.date.today()
 
     # NOTE: the order of the query-string parameters seems to matter; so,
     # we can't use a dictionary to hold the params
-    params = location_info + [("format", "24 hourly"),
+    params = [("whichClient", client)] + location_info + [("format", "24 hourly"),  # update to match newest API
                               ("startDate", start_date.strftime("%Y-%m-%d")),
                               ("numDays", str(num_days)),
-                              ("Unit", "m" if metric else "e")]
+                              ("Unit", "m" if metric else "e"),
+                              ("Submit", "Submit")]
 
-    FORECAST_BY_DAY_URL = ("http://www.weather.gov/forecasts/xml"
-                           "/sample_products/browser_interface"
-                           "/ndfdBrowserClientByDay.php")
+    FORECAST_BY_DAY_URL="https://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php"
 
     resp = utils.open_url(FORECAST_BY_DAY_URL, params)
     tree = utils.parse_xml(resp)

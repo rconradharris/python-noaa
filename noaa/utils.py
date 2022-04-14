@@ -3,8 +3,9 @@ import math
 import sys
 import urllib
 from xml.etree import ElementTree as ET
-
-import dateutil.parser
+import urllib.request
+from urllib.parse import urlencode, quote_plus
+from dateutil import parser
 
 
 def colorize(text, color):
@@ -38,11 +39,11 @@ def all_numbers(L):
 
 def print_tree(tree, indent=4):
     """Print an ElementTree for debugging purposes."""
-    def print_elem(elem, level):
-        print " " * (indent * level),
-        print 'tag="%s"' % elem.tag,
-        print 'text="%s"' % elem.text.strip() if elem.text is not None else "",
-        print 'attrib=%s' % elem.attrib
+    def print_elem(elem, level):        # some updates for py3.8 compatibility
+        print(" " * (indent * level))
+        print('tag="%s"' % elem.tag)
+        print('text="%s"' % elem.text.strip() if elem.text is not None else "")
+        print('attrib=%s' % elem.attrib)
         for child in elem.getchildren():
             print_elem(child, level + 1)
     print_elem(tree.getroot(), 0)
@@ -50,10 +51,10 @@ def print_tree(tree, indent=4):
 
 def open_url(url, params=None):
     if params:
-        query_string = urllib.urlencode(params)
+        query_string = urlencode(params, quote_via=quote_plus)  # some updates for py3.8 compatibility
         url = "?".join([url, query_string])
 
-    resp = urllib.urlopen(url)
+    resp = urllib.request.urlopen(url)  # some updates for py3.8 compatibility
     return resp
 
 
@@ -72,7 +73,7 @@ def die_on(*exception_classes, **kwargs):
     try:
         yield
     except exception_classes as e:
-        print >> sys.stderr, msg_func(e)
+        print(msg_func(e))  # some updates for py3.8 compatibility
         sys.exit(exit_code)
 
 
@@ -82,7 +83,7 @@ def parse_xml(fileobj):
 
 
 def parse_dt(dt):
-    return dateutil.parser.parse(dt)
+    return parser.parse(dt)
 
 
 def great_circle_distance(lat1, lon1, lat2, lon2, radius, angle_units="deg"):

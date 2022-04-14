@@ -68,7 +68,7 @@ def station_observation_by_station_id(station_id):
     and return the observation (if any) that has the data we want.
     """
     STATION_OBSERVATIONS_URL = (
-            'http://www.weather.gov/data/current_obs/%s.xml' % station_id)
+            'https://w1.weather.gov/data/current_obs/%s.xml' % station_id)      # updated to reflect new API
 
     resp = noaa.utils.open_url(STATION_OBSERVATIONS_URL)
     tree = noaa.utils.parse_xml(resp)

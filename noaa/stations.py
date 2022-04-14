@@ -86,5 +86,4 @@ def _parse_stations(fileobj):
         station = noaa.models.Station(station_id, location)
 
         stations.append(station)
-
     return stations

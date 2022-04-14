@@ -22,4 +22,4 @@
 Python bindings to the NOAA National Digital Forecast Database (NDFD)
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"

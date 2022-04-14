@@ -10,10 +10,8 @@ def geocode_location(location, api_key=None):
 
     For high-volume traffic, you will need to specify an API-key.
     """
-    GEOCODE_URL = "http://maps.google.com/maps/geo"
-    params = [('q', location),
-              ('sensor', 'false'),
-              ('output', 'json')]
+    GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"   # update to match new google API
+    params = ["latlng", location[0], location[1]]
 
     if api_key:
         params += [('key', api_key)]
